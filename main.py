@@ -5,12 +5,8 @@ import openpyxl
 from datetime import datetime, timedelta
 import re
 import google_cal as cal
+import yaml
 
-EVENT_SUMMARY = "Work shift"
-EVENT_LOCATION = "Sveavägen 145, 113 46 Stockholm"
-CALENDAR_ID = "oo3i1mcjbldcnjraltc6hi1ojk@group.calendar.google.com"
-SHEETS = ["Personligt schema A (ro)", "Personligt schema B (ro)"]
-NAME = "Olle W"
 NAME_ROW = 2
 TIME_ROW_START = 3
 DATE_COLUMN = 4
@@ -22,7 +18,7 @@ def find_name_in_sheet(sheet, name: str):
     return cell
 
 
-def get_times(sheet, cell):
+def get_times(sheet, cell, event_template, cal_id):
     times = [
         t[0] for t in sheet.iter_rows(
             TIME_ROW_START, 200, cell.column, cell.column, values_only=True)
@@ -43,27 +39,33 @@ def get_times(sheet, cell):
             end = end + timedelta(days=+1)
         cal.add_event(start,
                       end,
-                      summary=EVENT_SUMMARY,
-                      location=EVENT_LOCATION,
-                      cal_id=CALENDAR_ID)
+                      summary=event_template['summary'],
+                      location=event_template['location'],
+                      cal_id=cal_id)
         print(
             f"{start.strftime('%A %Y-%m-%d %H:%M')} - {end.strftime('%A %Y-%m-%d %H:%M')}"
         )
 
 
+def get_config(path):
+    config = yaml.safe_load(open(path, 'r'))
+    return config
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("path")
+    config = get_config("config/config.yaml")
     args = parser.parse_args()
     wb = openpyxl.load_workbook(args.path, read_only=True, data_only=True)
     ws = None
-    for s in SHEETS:
+    for s in config['sheets']:
         sheet = wb[s]
-        cell = find_name_in_sheet(sheet, NAME)
+        cell = find_name_in_sheet(sheet, config['name'])
         if cell:
             ws = sheet
             break
-    get_times(ws, cell)
+    get_times(ws, cell, config['event'], config['calendar_id'])
 
 
 if __name__ == "__main__":

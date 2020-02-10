@@ -1,0 +1,10 @@
+event:
+  summary: Event name
+  location: 1600 Pennsylvania Ave NW, Washington, DC 20500, United States
+
+calendar_id: bla_bla
+
+name: Elisabeth W
+sheets:
+  - Sheet name 1
+  - Sheet name 2
